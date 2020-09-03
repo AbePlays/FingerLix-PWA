@@ -23,7 +23,17 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  // console.log("Service Worker has been activated.");
+  console.log("Service Worker has been activated.");
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      console.log(keys);
+      return Promise.all(
+        keys
+          .filter((key) => key !== staticCacheName)
+          .map((key) => caches.delete())
+      );
+    })
+  );
 });
 
 self.addEventListener("fetch", (event) => {
