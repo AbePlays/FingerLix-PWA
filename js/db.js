@@ -17,6 +17,7 @@ db.collection("recipes").onSnapshot((snapshot) => {
     }
 
     if (change.type === "removed") {
+      removeRecipe(change.doc.id);
     }
   });
 });
@@ -36,4 +37,12 @@ form.addEventListener("submit", (event) => {
 
   form.title.value = "";
   form.ingredients.value = "";
+});
+
+const recipeContainer = document.querySelector(".recipes");
+recipeContainer.addEventListener("click", (event) => {
+  if (event.target.tagName === "I") {
+    const id = event.target.getAttribute("data-id");
+    db.collection("recipes").doc(id).delete();
+  }
 });
