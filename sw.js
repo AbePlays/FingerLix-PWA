@@ -50,25 +50,27 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   // console.log("Fetch Event", event);
-  // event.respondWith(
-  //   caches
-  //     .match(event.request)
-  //     .then((res) => {
-  //       return (
-  //         res ||
-  //         fetch(event.request).then((res) => {
-  //           return caches.open(dynamicCacheName).then((cache) => {
-  //             cache.put(event.request.url, res.clone());
-  //             limitCache(dynamicCacheName, 15);
-  //             return res;
-  //           });
-  //         })
-  //       );
-  //     })
-  //     .catch(() => {
-  //       if (event.request.url.indexOf(".html") > -1) {
-  //         return caches.match("/pages/fallback.html");
-  //       }
-  //     })
-  // );
+  if (event.request.url.indexOf("firestore.googleapis.com") === -1) {
+    event.respondWith(
+      caches
+        .match(event.request)
+        .then((res) => {
+          return (
+            res ||
+            fetch(event.request).then((res) => {
+              return caches.open(dynamicCacheName).then((cache) => {
+                cache.put(event.request.url, res.clone());
+                limitCache(dynamicCacheName, 15);
+                return res;
+              });
+            })
+          );
+        })
+        .catch(() => {
+          if (event.request.url.indexOf(".html") > -1) {
+            return caches.match("/pages/fallback.html");
+          }
+        })
+    );
+  }
 });
