@@ -1,4 +1,5 @@
 const staticCacheName = "site-static";
+const dynamicCacheName = "site-dynamic";
 const assets = [
   "/",
   "/index.html",
@@ -10,27 +11,28 @@ const assets = [
   "/img/food.png",
   "https://fonts.googleapis.com/icon?family=Material+Icons",
   "https://fonts.gstatic.com/s/materialicons/v47/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2",
+  "/pages/fallback.html",
 ];
 
 self.addEventListener("install", (event) => {
   // console.log("Service Worker has been installed.");
   event.waitUntil(
     caches.open(staticCacheName).then((cache) => {
-      console.log("Caching assets");
+      // console.log("Caching assets");
       cache.addAll(assets);
     })
   );
 });
 
 self.addEventListener("activate", (event) => {
-  console.log("Service Worker has been activated.");
+  // console.log("Service Worker has been activated.");
   event.waitUntil(
     caches.keys().then((keys) => {
-      console.log(keys);
+      // console.log(keys);
       return Promise.all(
         keys
-          .filter((key) => key !== staticCacheName)
-          .map((key) => caches.delete())
+          .filter((key) => key !== staticCacheName && key !== dynamicCacheName)
+          .map((key) => caches.delete(key))
       );
     })
   );
@@ -39,8 +41,23 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   // console.log("Fetch Event", event);
   event.respondWith(
-    caches.match(event.request).then((res) => {
-      return res || fetch(event.request);
-    })
+    caches
+      .match(event.request)
+      .then((res) => {
+        return (
+          res ||
+          fetch(event.request).then((res) => {
+            return caches.open(dynamicCacheName).then((cache) => {
+              cache.put(event.request.url, res.clone());
+              return res;
+            });
+          })
+        );
+      })
+      .catch(() => {
+        if (event.request.url.indexOf(".html") > -1) {
+          return caches.match("/pages/fallback.html");
+        }
+      })
   );
 });
